@@ -6,7 +6,7 @@ terraform {
       version = "~> 5.0"
     }
   }
-  
+
   backend "s3" {
     bucket       = "rocket-launch-viability-scorer-tfstate-bucket"
     key          = "capstone/terraform.tfstate"
@@ -14,16 +14,6 @@ terraform {
     encrypt      = true
     use_lockfile = true
   }
-}
-
-variable "region" {
-  type    = string
-  default = "us-east-1"
-}
-
-variable "project" {
-  type    = string
-  default = "rocket-launch-viability-scorer"
 }
 
 provider "aws" {
@@ -35,5 +25,17 @@ data "aws_iam_role" "lab" {
 }
 
 resource "aws_s3_bucket" "state" {
-  bucket = "rocket-launch-viability-scorer-tfstate-bucket" 
+  bucket = "rocket-launch-viability-scorer-tfstate-bucket"
+}
+
+module "security" {
+  source  = "./modules/security"
+  project = var.project
+}
+
+module "compute" {
+  source       = "./modules/compute"
+  project      = var.project
+  lab_role_arn = data.aws_iam_role.lab.arn
+  secret_name  = module.security.secret_name
 }
